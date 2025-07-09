@@ -1,4 +1,7 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from typing import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, \
+    AsyncSession
 
 from app.core.config import settings
 
@@ -15,7 +18,7 @@ engine = create_async_engine(
 async_session = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         try:
             yield session
@@ -30,9 +33,10 @@ async def get_db() -> AsyncSession:
 async def init_db():
     """Инициализация базы данных (создание таблиц)"""
     async with engine.begin() as conn:
-        # from app.models import Base
+        from app.models import Base
+
         # Удаляем все таблицы (для разработки)
-        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
         # Создаем все таблицы
-        # await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
         pass
