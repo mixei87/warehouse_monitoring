@@ -18,3 +18,5 @@ matplotlib==3.10.3
 python-dateutil==2.9.0
 pydantic[email]==2.11.7
 pydantic-settings==2.10.1
+psycopg2-binary==2.9.10
+alembic==1.16.3
