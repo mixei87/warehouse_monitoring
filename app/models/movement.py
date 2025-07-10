@@ -1,3 +1,5 @@
+import os.path
+from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy import (
@@ -5,8 +7,6 @@ from sqlalchemy import (
     Integer,
     Enum as SQLEnum,
     CheckConstraint,
-    event,
-    DDL,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,29 +15,30 @@ from app.models.base import Base, timestamp_type, MovementType
 
 class Movement(Base):
     """Модель движения товаров
-    id: Уникальный идентификатор UUID
-    warehouse_id: ID склада
-    product_id: ID товара
-    event_type: Тип события (приход/уход)
-    quantity: Количество товара
-    timestamp: Временная метка события
+    Атрибуты:
+        id: Уникальный идентификатор UUID
+        movement_id: ID перемещения для группировки связанных событий
+        warehouse_id: ID склада, на котором изменяются остатки
+        product_id: ID товара
+        event_type: Тип события (arrival/departure)
+        quantity: Количество товара (должно быть положительным)
+        timestamp: Временная метка события
     """
 
     __tablename__ = "movements"
     __repr_cols__ = ("warehouse_id", "product_id", "event_type", "quantity")
-    __table_args__ = (CheckConstraint("quantity >= 0", name="check_quantity_positive"),)
+    __table_args__ = (CheckConstraint("quantity > 0", name="check_quantity_positive"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, index=True)
     movement_id: Mapped[UUID] = mapped_column(
-        index=True, 
-        nullable=False, 
-        doc="ID перемещения для группировки связанных событий"
+        index=True,
+        nullable=False,
+        doc="ID перемещения для группировки связанных событий",
     )
     warehouse_id: Mapped[UUID] = mapped_column(
-        ForeignKey("warehouses.id", ondelete="CASCADE"), nullable=False, doc="ID склада-получателя"
-    )
-    source_id: Mapped[UUID] = mapped_column(
-        ForeignKey("warehouses.id", ondelete="CASCADE"), nullable=False, doc="ID склада-отправителя"
+        ForeignKey("warehouses.id", ondelete="CASCADE"),
+        nullable=False,
+        doc="ID склада, на котором изменяются остатки",
     )
     product_id: Mapped[UUID] = mapped_column(
         ForeignKey("products.id", ondelete="CASCADE"),
@@ -54,16 +55,17 @@ class Movement(Base):
     )
     timestamp: Mapped[timestamp_type]
 
-    warehouse = relationship("Warehouse", foreign_keys=[warehouse_id], back_populates="incoming_movements")
-    source_warehouse = relationship("Warehouse", foreign_keys=[source_id], back_populates="outgoing_movements")
+    warehouse = relationship("Warehouse", back_populates="movements")
 
     @classmethod
-    def register_trigger_update_quantity(cls):
+    def get_sql_trigger_movement_after_insert(cls) -> str:
         try:
-            with open("sql/triggers/update_warehouse_stock_trigger.sql") as f:
+            trigger_path = os.path.join(
+                Path(__file__).parent, "sql/triggers/update_warehouse_stock_trigger.sql"
+            )
+            with open(trigger_path) as f:
                 sql = f.read()
-            update_quantity_trigger = DDL(sql)
-            event.listen(cls, "after_insert", update_quantity_trigger)
+            return sql
         except FileNotFoundError as e:
             raise FileNotFoundError(e)
         except Exception as e:
