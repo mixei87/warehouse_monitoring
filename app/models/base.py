@@ -20,7 +20,9 @@ class Base(DeclarativeBase):
 
 
 pk = Annotated[int, mapped_column(primary_key=True)]
-uuid_pk = Annotated[UUID, mapped_column(primary_key=True)]
+uuid_pk = Annotated[
+    UUID, mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+]
 short_string = Annotated[str, mapped_column(String(20), unique=True, nullable=False)]
 long_string = Annotated[str, mapped_column(String(255), unique=True, nullable=False)]
 timestamp_type = Annotated[
@@ -29,5 +31,5 @@ timestamp_type = Annotated[
 
 
 class MovementType(PyEnum):
-    ARRIVAL = "arrival"
-    DEPARTURE = "departure"
+    ARRIVAL = "ARRIVAL"
+    DEPARTURE = "DEPARTURE"

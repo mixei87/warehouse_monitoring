@@ -22,17 +22,10 @@ class Warehouse(Base):
         doc="Идентификатор склада в формате WH-XXXX"
     )
 
-    # Связи с движениями
-    incoming_movements: Mapped[list["Movement"]] = relationship(
+    # Все перемещения, связанные со складом (как входящие, так и исходящие)
+    movements: Mapped[list["Movement"]] = relationship(
         "Movement",
         foreign_keys="[Movement.warehouse_id]",
         back_populates="warehouse",
-        cascade="all, delete-orphan",
-    )
-
-    outgoing_movements: Mapped[list["Movement"]] = relationship(
-        "Movement",
-        foreign_keys="[Movement.source_id]",
-        back_populates="source_warehouse",
         cascade="all, delete-orphan",
     )

@@ -29,8 +29,3 @@ class Stock(Base):
     quantity: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, doc="Количество товара на складе"
     )
-
-    __table_args__ = (
-        # Индекс для ускорения поиска по product_id
-        {"postgresql_using": "btree"},
-    )
