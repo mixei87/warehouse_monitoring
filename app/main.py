@@ -3,7 +3,7 @@ from logging import getLogger
 
 from fastapi import FastAPI
 
-from app.api import router
+from app.routes import router
 from app.core.config import settings
 from app.core.logger import setup_logging
 from app.db.init_db import init_db

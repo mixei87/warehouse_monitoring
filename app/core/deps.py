@@ -1,11 +1,13 @@
+from typing import Annotated
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.annotation import Annotated
 
 from app.db.session import get_db
-from app.repositories.movement import MovementRepository
-from app.repositories.stock import StockRepository
-from app.repositories.warehouse import WarehouseRepository
+from app.repo.movement import MovementRepository
+from app.repo.product import ProductRepository
+from app.repo.stock import StockRepository
+from app.repo.warehouse import WarehouseRepository
 from app.services.movement import MovementService
 from app.services.stock import StockService
 from app.services.warehouse import WarehouseService
@@ -22,6 +24,10 @@ async def get_stock_repo(db: AsyncSession = Depends(get_db)) -> StockRepository:
 
 async def get_movement_repo(db: AsyncSession = Depends(get_db)) -> MovementRepository:
     return MovementRepository(db=db)
+
+
+async def get_product_repo(db: AsyncSession = Depends(get_db)) -> ProductRepository:
+    return ProductRepository(db=db)
 
 
 # Зависимости сервисов
@@ -45,8 +51,15 @@ async def get_movement_service(
 async def get_stock_service(
     db: AsyncSession = Depends(get_db),
     stock_repo: StockRepository = Depends(get_stock_repo),
+    warehouse_repo: WarehouseRepository = Depends(get_warehouse_repo),
+    product_repo: ProductRepository = Depends(get_product_repo),
 ) -> StockService:
-    return StockService(db=db, stock_repo=stock_repo)
+    return StockService(
+        db=db,
+        stock_repo=stock_repo,
+        warehouse_repo=warehouse_repo,
+        product_repo=product_repo,
+    )
 
 
 WarehouseServiceDepends = Annotated[WarehouseService, Depends(get_warehouse_service)]

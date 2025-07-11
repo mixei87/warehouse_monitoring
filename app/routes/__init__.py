@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from app.api.endpoints.movement import router as movement_router
-from app.api.endpoints.stock import router as stock_router
+from app.routes.movement import router as movement_router
+from app.routes.stock import router as stock_router
 
 router = APIRouter(prefix="/api")
 
